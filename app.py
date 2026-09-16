@@ -9,7 +9,6 @@ env_path = Path(__file__).resolve().parent / ".env"
 load_dotenv(dotenv_path=env_path)
 
 app = Flask(__name__)
-client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
 
 SYSTEM_PROMPT = """
 You are a senior venture capitalist and market research analyst.
@@ -39,6 +38,12 @@ def analyze_idea():
         return Response(payload.encode("utf-8"), status=400, mimetype="application/json; charset=utf-8")
 
     try:
+        api_key = os.getenv("GEMINI_API_KEY")
+        if not api_key:
+            payload = json.dumps({"error": "GEMINI_API_KEY is not configured."})
+            return Response(payload.encode("utf-8"), status=500, mimetype="application/json; charset=utf-8")
+
+        client = genai.Client(api_key=api_key)
         response = client.models.generate_content(
             model="gemini-2.5-flash",
             contents=f"{SYSTEM_PROMPT}\n\nUser Idea: {user_idea}"
